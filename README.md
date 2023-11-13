@@ -52,3 +52,21 @@ def process_data(**kwargs):
         return 'file_creation_production'
     else:
         raise ValueError(f"Invalid environment_type: {environment_type}. Allowed values
+
+
+
+
+
+
+
+
+
+    use:
+
+    docker build -t airflow .
+
+
+    then add the config chnages:
+
+
+    the pass the .py file in to dag folder
