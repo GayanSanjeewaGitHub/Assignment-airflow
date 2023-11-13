@@ -23,9 +23,9 @@ dag = DAG(
     max_active_runs= 2 
 )
 
-def trigger_workflow(**kwargs):
-    environment_type = "development"                                       # XComs allow tasks to exchange small amounts of metadata
-    kwargs['ti'].xcom_push(key='environment_type', value=environment_type) #cross-communication mechanism in Airflow
+# def trigger_workflow(**kwargs):
+#     environment_type = "development"                                       # XComs allow tasks to exchange small amounts of metadata
+#     kwargs['ti'].xcom_push(key='environment_type', value=environment_type) #cross-communication mechanism in Airflow
 
 # api_trigger_task = PythonOperator(
 #     task_id='api_trigger',                                   #unique identifier for the task
@@ -38,7 +38,8 @@ def file_creation_development(**kwargs):
     environment_type = kwargs['ti'].xcom_pull(task_ids='process_data', key='environment_type')
     if environment_type == 'development':
         # Write content to a file
-        with open(f"civalue_development_{datetime.now()}.txt", "w") as file:
+        timestamp_str = datetime.now(local_timezone).strftime("%Y-%m-%d_%H-%M-%S")
+        with open(f"civalue_development_{timestamp_str}.txt", "w") as file:
             file.write("hello ciValue from development branch")
         print_to_console("development")
 
@@ -53,7 +54,8 @@ def file_creation_production(**kwargs):
     environment_type = kwargs['ti'].xcom_pull(task_ids='process_data', key='environment_type')
     if environment_type == 'production':
         # Write content to a file
-        with open(f"civalue_production_{datetime.now()}.txt", "w") as file:
+        timestamp_str = datetime.now(local_timezone).strftime("%Y-%m-%d_%H-%M-%S")
+        with open(f"civalue_production_{timestamp_str}.txt", "w") as file:
             file.write("hello ciValue from production branch")
         print_to_console("production")
 
@@ -66,12 +68,12 @@ file_creation_production = PythonOperator(
 )
 
 def process_data(**kwargs):
-    environment_type_test_value = "development"                                       # XComs allow tasks to exchange small amounts of metadata
-    kwargs['ti'].xcom_push(key='environment_type', value=environment_type_test_value) #cross-communication mechanism in Airflow
+    environment_type_value = kwargs['dag'].conf.get('environment_type')                                     # XComs allow tasks to exchange small amounts of metadata
+    kwargs['ti'].xcom_push(key='environment_type', value=environment_type_value)                            #cross-communication mechanism in Airflow
     environment_type = kwargs['ti'].xcom_pull(task_ids='process_data', key='environment_type')
-    if environment_type == 'development':
+    if environment_type_value == 'development':
         return 'file_creation_development'
-    elif environment_type == 'production':
+    elif environment_type_value == 'production':
         return 'file_creation_production'
     else:
         raise ValueError(f"Invalid environment_type: {environment_type}. Allowed values are 'development' or 'production'.")
